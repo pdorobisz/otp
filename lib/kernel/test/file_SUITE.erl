@@ -3948,7 +3948,11 @@ sendfile(Config) when is_list(Config) ->
     ?line Data = ?config(data_dir, Config),
     ?line Real = filename:join(Data, "realmen.html"),
     Host = "localhost",
-    ?line {error, ebadf} = file:sendfile(Real, -1),
+
+    ?line {error, Error} = file:sendfile(Real, -1),
+    %% Unix: ebadf Windows: eio
+    ?line true = Error =:= ebadf orelse Error =:= eio,
+
     ?line ok = sendfile_send(Host, Real),
     ?line ok = sendfile_send_chunked(Host, Real).
 
