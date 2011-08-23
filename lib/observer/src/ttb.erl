@@ -596,6 +596,13 @@ stop(Opts) when is_list(Opts) ->
                 ?MODULE ! {stop,Fetch,self()},
                 receive {?MODULE,R} -> R end
         end,
+    case Fetch of
+        nofetch ->
+            ok;
+        _ ->
+            %% Printout moved out of the ttb loop to avoid occasional deadlock
+            io:format("Stored logs in ~s~n", [element(2, Result)])
+    end,
     stop_return(Result,Opts);
 stop(Opts) ->
     stop([Opts]).
@@ -632,8 +639,6 @@ ensure_fetch_dir(Dir) ->
 stop_return(R,Opts) ->
     case {lists:member(return_fetch_dir,Opts),R} of
         {true,_} ->
-            %%Printout moved out of the ttb loop to avoid occasional deadlock
-            io:format("Stored logs in ~s~n",[element(2, R)]),
             R;
         {false,{stopped,_}} ->
             stopped;
