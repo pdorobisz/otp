@@ -596,12 +596,14 @@ stop(Opts) when is_list(Opts) ->
                 ?MODULE ! {stop,Fetch,self()},
                 receive {?MODULE,R} -> R end
         end,
-    case Fetch of
-        nofetch ->
+    case {Fetch, Result} of
+        {nofetch, _} ->
             ok;
-        _ ->
+        {_, {stopped, _}} ->
             %% Printout moved out of the ttb loop to avoid occasional deadlock
-            io:format("Stored logs in ~s~n", [element(2, Result)])
+            io:format("Stored logs in ~s~n", [element(2, Result)]);
+        {_, _} ->
+            ok
     end,
     stop_return(Result,Opts);
 stop(Opts) ->
