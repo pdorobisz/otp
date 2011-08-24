@@ -93,13 +93,15 @@ etop_collect([], Acc) -> Acc.
 %%
 %% ttb backend
 %%
-ttb_init_node(MetaFile,PI,Traci) ->
+ttb_init_node(MetaFile_0,PI,Traci) ->
     if
-	is_list(MetaFile);
-	is_atom(MetaFile) ->
+	is_list(MetaFile_0);
+	is_atom(MetaFile_0) ->
+	    {ok, Cwd} = file:get_cwd(),
+	    MetaFile = filename:join(Cwd, MetaFile_0),
 	    file:delete(MetaFile);
 	true -> 				% {local,_,_}
-	    ok
+	    MetaFile = MetaFile_0
     end,
     case proplists:get_value(resume, Traci) of
         {true, _} -> (autostart_module()):write_config(Traci);
@@ -116,7 +118,7 @@ ttb_init_node(MetaFile,PI,Traci) ->
 	false ->
 	    ok
     end,
-    {ok,MetaPid}.
+    {ok,MetaFile,MetaPid}.
 
 ttb_write_trace_info(MetaPid,Key,What) ->
     MetaPid ! {metadata,Key,What},
@@ -362,7 +364,7 @@ ttb_fetch(MetaFile,{Port,Host}) ->
 
 send_files({Sock,Host},[File|Files]) ->
     {ok,Fd} = file:open(File,[raw,read,binary]),
-    gen_tcp:send(Sock,<<1,(list_to_binary(File))/binary>>),
+    gen_tcp:send(Sock,<<1,(list_to_binary(filename:basename(File)))/binary>>),
     send_chunks(Sock,Fd),
     file:delete(File),
     send_files({Sock,Host},Files);
