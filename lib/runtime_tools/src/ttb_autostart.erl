@@ -25,7 +25,7 @@
 -define(AUTOSTART_FILENAME, "ttb_autostart.bin").
 
 start_link() ->
-    gen_server:start_link(?MODULE, no_args, []).
+    gen_server:start_link(?MODULE, no_args).
 
 delete_config() ->
     file:delete(?AUTOSTART_FILENAME).
