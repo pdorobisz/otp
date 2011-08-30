@@ -1366,7 +1366,7 @@ trace_resumed_after_node_restart(doc) ->
 trace_resumed_after_node_restart(Config) when is_list(Config) ->
     ?line {ServerNode, ClientNode} = start_client_and_server(),
     ?line begin_trace_with_resume(ServerNode, ClientNode, ?FNAME),
-    ?line logic(2,6).
+    ?line logic(2,6,file).
 
 trace_resumed_after_node_restart_ip(suite) ->
     [];
@@ -1375,7 +1375,7 @@ trace_resumed_after_node_restart_ip(doc) ->
 trace_resumed_after_node_restart_ip(Config) when is_list(Config) ->
     ?line {ServerNode, ClientNode} = start_client_and_server(),
     ?line begin_trace_with_resume(ServerNode, ClientNode, {local, ?FNAME}),
-    ?line logic(2,6).
+    ?line logic(2,6,local).
 
 trace_resumed_after_node_restart_wrap(suite) ->
     [];
@@ -1384,7 +1384,7 @@ trace_resumed_after_node_restart_wrap(doc) ->
 trace_resumed_after_node_restart_wrap(Config) when is_list(Config) ->
     ?line {ServerNode, ClientNode} = start_client_and_server(),
     ?line begin_trace_with_resume(ServerNode, ClientNode, {wrap, ?FNAME, 10, 4}),
-    ?line logic(1,4).
+    ?line logic(1,4,file).
 
 trace_resumed_after_node_restart_wrap_mult(suite) ->
     [];
@@ -1393,16 +1393,16 @@ trace_resumed_after_node_restart_wrap_mult(doc) ->
 trace_resumed_after_node_restart_wrap_mult(Config) when is_list(Config) ->
     ?line {ServerNode, ClientNode} = start_client_and_server(),
     ?line begin_trace_with_resume(ServerNode, ClientNode, {wrap, ?FNAME, 10, 4}),
-    ?line logic(20,8).
+    ?line logic(20,8,file).
         
-logic(N, M) ->
-    ttb_helper:msgs(N),
+logic(N, M, TracingType) ->
+    helper_msgs(N, TracingType),
     ?t:stop_node(ttb_helper:get_node(client)),
     timer:sleep(2500),
     ?line {ok,ClientNode} = ?t:start_node(client,slave,[]),
     ?line ok = ttb_helper:c(code, add_paths, [code:get_path()]),
     ?line ttb_helper:c(client, init, []),
-    ?line ttb_helper:msgs(N),
+    ?line helper_msgs(N, TracingType),
     ?line {_, D} = ttb:stop([return_fetch_dir]),
     ?line ?t:stop_node(ttb_helper:get_node(server)),
     ?line ?t:stop_node(ClientNode),
@@ -1420,3 +1420,11 @@ begin_trace_with_resume(ServerNode, ClientNode, Dest) ->
 ret_caller_call_handler2() ->
     {fun(A, {trace_ts, _, call, _, _} ,_,_) -> io:format(A, "ok.~n", []);
 	(_, _, _, _) -> ok end, []}.
+
+helper_msgs(N, TracingType) ->
+    case TracingType of
+        local ->
+            ttb_helper:msgs_ip(N);
+        _ ->
+            ttb_helper:msgs(N)
+    end.
